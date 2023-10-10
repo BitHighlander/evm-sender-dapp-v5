@@ -147,7 +147,6 @@ const Home = () => {
   const [isNFT, setIsNFT] = useState(false);
   const [tokenId, setTokenId] = useState("");
   const [icon, setIcon] = useState("https://pioneers.dev/coins/ethereum.png");
-  const [service, setService] = useState("");
   const [tokenName, setTokenName] = useState("");
   const [prescision, setPrescision] = useState("");
   const [token, setToken] = useState("");
@@ -155,6 +154,7 @@ const Home = () => {
   const [blockchain, setBlockchain] = useState("");
   const [chainId, setChainId] = useState(1);
   const [web3, setWeb3] = useState(null);
+  const [service, setService] = useState(null);
   const [toAddress, setToAddress] = useState("");
   const [txid, setTxid] = useState(null);
   const [signedTx, setSignedTx] = useState(null);
@@ -165,6 +165,8 @@ const Home = () => {
   const [data, setData] = useState(() => []);
   const [query, setQuery] = useState("bitcoin...");
   const [timeOut, setTimeOut] = useState(null);
+  const [showCustomNetworkForm, setShowCustomNetworkForm] = useState(false);
+  const [serviceValid, setServiceValid] = useState(true);
 
   useEffect(() => {
     console.log("pubkeyContext: ", pubkeyContext);
@@ -384,7 +386,7 @@ const Home = () => {
       console.log("wallet: ", wallet);
       //@ts-ignore @TODO detect context
       // const isMetaMask = await wallet?._isMetaMask;
-      let isMetaMask = false
+      let isMetaMask = false;
       // @ts-ignore
       if (wallet[0].type === "metamask") isMetaMask = true;
       console.log("wallet: ", wallet);
@@ -573,7 +575,7 @@ const Home = () => {
         setPrescision(decimals);
         console.log("address: ", address);
         const balanceBN = await newContract.methods.balanceOf(address).call();
-        console.log("input: balanceBN: ",balanceBN)
+        console.log("input: balanceBN: ", balanceBN);
         // @ts-ignore
         const tokenBalance = parseInt(balanceBN / Math.pow(10, decimals));
         if (tokenBalance > 0) {
@@ -650,10 +652,60 @@ const Home = () => {
     }
   };
 
+  const handleSelectChainId = async function (chainId: any) {
+    try {
+      console.log("handleSelectChainId input: ", chainId);
+      const caip = "eip155:" + chainId + "/slip44:60";
+      console.log("caip: ", caip);
+      const info = await api.NodesByCaip({ caip });
+      console.log("info: ", info.data[0]);
+      console.log("handleSelect: chainId: ", info.data[0].chainId);
+      if (info.data[0]) {
+        const entry = info.data[0];
+
+        //entry
+        setIcon(entry.image);
+        setService(entry.service);
+        setChainId(chainId);
+        setBlockchain(entry.blockchain);
+        const web3New = new Web3(
+          new Web3.providers.HttpProvider(entry.service)
+        );
+        // @ts-ignore
+        setWeb3(web3New);
+        if (web3New) {
+          //Get the current block number
+          const blockNumber = await web3New.eth.getBlockNumber();
+          console.log("blockNumber: ", blockNumber);
+          const balanceResult = await web3New.eth.getBalance(
+            address,
+            blockNumber
+          );
+          console.log("balanceResult: ", balanceResult);
+          const balanceInEther = web3New.utils.fromWei(balanceResult, "ether");
+          setBalance(balanceInEther);
+        }
+      } else {
+        alert("Unable to find chain info for chainId: " + chainId);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleSelectWallet = (event: any) => {
     const selectedContext = event.target.value;
     console.log("selectedContext: ", selectedContext);
     setSelectedWallet(selectedContext);
+  };
+
+  // Event handler for custom RPC form submission
+  const handleCustomRpcSubmit = () => {
+    handleSelectChainId(chainId);
+  };
+
+  const toggleCustomNetworkForm = () => {
+    setShowCustomNetworkForm(!showCustomNetworkForm);
   };
 
   // @ts-ignore
@@ -854,17 +906,67 @@ const Home = () => {
                   <Text fontSize="xl" fontWeight="bold">
                     Selected: {blockchain} (chainId{chainId})
                   </Text>
-                  <Select
-                    placeholder={`selected: ${blockchain}`}
-                    defaultValue="ethereum"
-                    onChange={handleSelect}
-                  >
-                    {ALL_CHAINS.map((blockchain) => (
-                      <option value={blockchain.name}>
-                        {blockchain.name} ({blockchain.symbol})
-                      </option>
-                    ))}
-                  </Select>
+                  {showCustomNetworkForm ? (
+                    <div>
+                      <Select
+                        placeholder={`selected: ${blockchain}`}
+                        defaultValue="ethereum"
+                        onChange={handleSelect}
+                      >
+                        {ALL_CHAINS.map((blockchain) => (
+                          <option value={blockchain.name}>
+                            {blockchain.name} ({blockchain.symbol})
+                          </option>
+                        ))}
+                      </Select>
+                      <br />
+                      <Button onClick={toggleCustomNetworkForm}>
+                        Add Custom Network{" "}
+                        <span role="img" aria-label="Plug Symbol">
+                          🔌
+                        </span>
+                      </Button>
+                    </div>
+                  ) : (
+                    <div>
+                      <Text>Custom RPC URL:</Text>
+
+                      <input
+                        type="text"
+                        placeholder="Chain ID"
+                        value={chainId}
+                        onChange={(e) => setChainId(parseInt(e.target.value))}
+                      />
+                      <br />
+                      {/*<input*/}
+                      {/*  type="text"*/}
+                      {/*  placeholder="Custom RPC URL"*/}
+                      {/*  value={service}*/}
+                      {/*  onChange={(e) => setService(e.target.value)}*/}
+                      {/*  style={{*/}
+                      {/*    borderColor: serviceValid ? "green" : "red",*/}
+                      {/*  }}*/}
+                      {/*/>*/}
+                      {/*<br />*/}
+                      <button type="submit" onClick={handleCustomRpcSubmit}>
+                        Submit
+                      </button>
+                      <Box mt="1rem">
+                        <Text fontWeight="bold">Find Networks:</Text>
+                        <a
+                          href="https://chainlist.org/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Visit chainlist.org
+                        </a>
+                      </Box>
+                      <br />
+                      <Button onClick={toggleCustomNetworkForm}>
+                        Select from Common Networks{" "}
+                      </Button>
+                    </div>
+                  )}
                 </Box>
                 <Box p="1rem" border="1px" borderColor="gray.300">
                   <Text>address: {address}</Text>
