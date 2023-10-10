@@ -133,7 +133,7 @@ interface WalletOption {
 
 const Home = () => {
   const { state } = usePioneer();
-  const { api, app, context, assetContext, blockchainContext, pubkeyContext } =
+  const { api, app, context, assetContext, blockchainContext, pubkeyContext, status } =
     state;
   const [address, setAddress] = useState("");
   const [wallet, setWallet] = useState([]);
@@ -170,8 +170,8 @@ const Home = () => {
 
   useEffect(() => {
     console.log("pubkeyContext: ", pubkeyContext);
-    setAddress(pubkeyContext.master || pubkeyContext.pubkey || "");
-  }, [pubkeyContext]);
+    setAddress(pubkeyContext.master || pubkeyContext.pubkey || pubkeyContext || "");
+  }, [pubkeyContext, status]);
 
   const onSend = async function () {
     try {
