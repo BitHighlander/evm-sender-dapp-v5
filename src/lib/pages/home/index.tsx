@@ -997,7 +997,7 @@ const Home = () => {
                     </div>
                   ) : (
                     <div>
-                      <Text>Custom RPC URL:</Text>
+                      <Text>Enter your chains chainId:</Text>
 
                       <input
                         type="text"
@@ -1020,7 +1020,7 @@ const Home = () => {
                         Submit
                       </button>
                       <Box mt="1rem">
-                        <Text fontWeight="bold">Find Networks:</Text>
+                        <Text fontWeight="bold">Find your Networks chainId:</Text>
                         <a
                           href="https://chainlist.org/"
                           target="_blank"
