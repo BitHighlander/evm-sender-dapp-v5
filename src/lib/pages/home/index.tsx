@@ -717,7 +717,6 @@ const Home = () => {
       console.log("caip: ", caip);
       const info = await api.NodesByCaip({ caip });
       console.log("info: ", info.data[0]);
-      console.log("handleSelect: chainId: ", info.data[0].chainId);
       if (info.data[0]) {
         const entry = info.data[0];
 
@@ -744,6 +743,7 @@ const Home = () => {
           setBalance(balanceInEther);
         }
       } else {
+        handleSelect({ target: { value: "ethereum" }  });
         alert("Unable to find chain info for chainId: " + chainId);
       }
     } catch (e) {
