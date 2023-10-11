@@ -132,9 +132,17 @@ interface WalletOption {
 }
 
 const Home = () => {
-  const { state } = usePioneer();
-  const { api, app, context, assetContext, blockchainContext, pubkeyContext, status } =
-    state;
+  const { state, dispatch } = usePioneer();
+  const {
+    api,
+    app,
+    context,
+    assetContext,
+    blockchainContext,
+    pubkeyContext,
+    status,
+  } = state;
+  const [isLoading, setIsLoading] = useState(true);
   const [address, setAddress] = useState("");
   const [wallet, setWallet] = useState([]);
   const [walletOptions, setWalletOptions] = useState([]);
@@ -168,10 +176,53 @@ const Home = () => {
   const [showCustomNetworkForm, setShowCustomNetworkForm] = useState(false);
   const [serviceValid, setServiceValid] = useState(true);
 
+  const setContextWallet = async function (wallet: string) {
+    try {
+      //console.log("setContextWallet: ", wallet);
+      // eslint-disable-next-line no-console
+      //console.log("wallets: ", app.wallets);
+      const matchedWallet = app.wallets.find(
+        (w: { type: string }) => w.type === wallet
+      );
+      //console.log("matchedWallet: ", matchedWallet);
+      if (matchedWallet) {
+        const context = await app.setContext(matchedWallet.wallet);
+        console.log("result change: ", context);
+        //console.log("app.context: ", app.context);
+
+        //console.log(
+        //   "app.pubkeyContext: ",
+        //   app.pubkeyContext.master || app.pubkeyContext.pubkey
+        // );
+        const pubkeyContext =
+          app.pubkeyContext.master || app.pubkeyContext.pubkey;
+
+        dispatch({ type: "SET_CONTEXT", payload: app.context });
+        dispatch({ type: "SET_PUBKEY_CONTEXT", payload: app.pubkeyContext });
+        // dispatch({ type: "SET_WALLET", payload: wallet });
+      } else {
+        //console.log("No wallet matched the type of the context");
+      }
+    } catch (e) {
+      console.error("header e: ", e);
+    }
+  };
+
   useEffect(() => {
     console.log("pubkeyContext: ", pubkeyContext);
-    setAddress(pubkeyContext.master || pubkeyContext.pubkey || pubkeyContext || "");
+    setAddress(
+      pubkeyContext.master || pubkeyContext.pubkey || pubkeyContext || ""
+    );
   }, [pubkeyContext, status]);
+
+  let checkAddress = function () {
+    setContextWallet("metamask");
+    setIsLoading(true);
+
+    setAddress(
+      pubkeyContext.master || pubkeyContext.pubkey || pubkeyContext || ""
+    );
+  };
 
   const onSend = async function () {
     try {
@@ -708,6 +759,16 @@ const Home = () => {
     setShowCustomNetworkForm(!showCustomNetworkForm);
   };
 
+  useEffect(() => {
+    // Simulate a 2-second delay
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+
+    // Clear the timer when the component unmounts
+    return () => clearTimeout(timer);
+  }, []);
+
   // @ts-ignore
   return (
     <div>
@@ -985,13 +1046,25 @@ const Home = () => {
         </Box>
       ) : (
         // Spinner to show while loading address
-        <Spinner
-          size="xl"
-          thickness="4px"
-          speed="0.65s"
-          emptyColor="gray.200"
-          color="green.500"
-        />
+        <div>
+          {isLoading ? (
+            <Spinner
+              size="xl"
+              thickness="4px"
+              speed="0.65s"
+              emptyColor="gray.200"
+              color="green.500"
+            />
+          ) : (
+            <Button
+              onClick={checkAddress}
+              variant="solid"
+              colorScheme="green"
+            >
+              Connect Wallet
+            </Button>
+          )}
+        </div>
       )}
     </div>
   );
