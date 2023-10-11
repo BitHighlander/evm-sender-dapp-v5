@@ -26,7 +26,7 @@ const HeaderNew = () => {
           </Text>
         </RouterLink>
       </HStack>
-      <Pioneer />
+      {/*<Pioneer />*/}
     </Flex>
   );
 };
