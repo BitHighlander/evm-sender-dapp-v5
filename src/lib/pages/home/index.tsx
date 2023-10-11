@@ -210,18 +210,25 @@ const Home = () => {
 
   useEffect(() => {
     console.log("pubkeyContext: ", pubkeyContext);
-    setAddress(
-      pubkeyContext.master || pubkeyContext.pubkey || pubkeyContext || ""
-    );
+    const address =
+      pubkeyContext.master || pubkeyContext.pubkey || pubkeyContext;
+    if (address && address.length > 0 && address !== "0") {
+      setAddress(address);
+    }
   }, [pubkeyContext, status]);
 
-  let checkAddress = function () {
+  const checkAddress = function () {
     setContextWallet("metamask");
+    setContextWallet("keepkey");
     setIsLoading(true);
-
-    setAddress(
-      pubkeyContext.master || pubkeyContext.pubkey || pubkeyContext || ""
-    );
+    const address =
+      pubkeyContext.master || pubkeyContext.pubkey || pubkeyContext;
+    if (address && address.length > 0 && address !== "0") {
+      setAddress(address);
+    }
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
   };
 
   const onSend = async function () {
@@ -1056,11 +1063,7 @@ const Home = () => {
               color="green.500"
             />
           ) : (
-            <Button
-              onClick={checkAddress}
-              variant="solid"
-              colorScheme="green"
-            >
+            <Button onClick={checkAddress} variant="solid" colorScheme="green">
               Connect Wallet
             </Button>
           )}
